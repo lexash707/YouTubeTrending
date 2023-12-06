@@ -14,12 +14,18 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 public class YouTubeTrendingApplication {
 
-    public static void main(String[] args) throws IOException, CsvException {
+    public static void main(String[] args) throws IOException, CsvException, ParseException {
 
         //input - paths to dataset
         String csvFilePath = "D:\\Fakultet\\Dataset\\USvideos.csv";
@@ -32,7 +38,7 @@ public class YouTubeTrendingApplication {
 
     }
 
-    public static void convertToJson(String csvPath, String categoryJsonPath, String jsonPath) throws IOException, CsvException {
+    public static void convertToJson(String csvPath, String categoryJsonPath, String jsonPath) throws IOException, CsvException, ParseException {
         CSVReader reader = new CSVReaderBuilder(new FileReader(csvPath)).build();
         List<String[]> lines = reader.readAll();
 
@@ -56,26 +62,26 @@ public class YouTubeTrendingApplication {
     //video_id,trending_date,title,channel_title,category_id,publish_time,tags,views,likes,dislikes,comment_count,thumbnail_link,comments_disabled,ratings_disabled,video_error_or_removed,description
 
     //convert one line in one JSON object
-    public static JSONObject lineToObject(String[] line, String[] header, String categoryJsonPath) throws IOException {
+    public static JSONObject lineToObject(String[] line, String[] header, String categoryJsonPath) throws IOException, ParseException {
         JSONObject trendingVideo = new JSONObject();
 
         for(int i = 0; i < line.length; i++){
             String key = header[i];
             String value = line[i];
 
-            if(key.equals("category_id")){
-                trendingVideo.put("category",categoryIdToObject(Integer.parseInt(value), categoryJsonPath));
-            }else if(key.equals("tags")){
-                JSONArray tags = new JSONArray(parseTags(value));
-                trendingVideo.put(key, tags);
-            } else if (key.equals("views")
-                    || key.equals("likes")
-                    || key.equals("dislikes")
-                    || key.equals("comment_count")) {
-
-                trendingVideo.put(key, Integer.parseInt(value));
-            } else{
-                trendingVideo.put(key, value);
+            switch (key) {
+                case "category_id" ->
+                        trendingVideo.put("category", categoryIdToObject(Integer.parseInt(value), categoryJsonPath));
+                case "tags" -> {
+                    JSONArray tags = new JSONArray(parseTags(value));
+                    trendingVideo.put(key, tags);
+                }
+                case "views", "likes", "dislikes", "comment_count" -> trendingVideo.put(key, Integer.parseInt(value));
+                case "trending_date", "publish_time" -> {
+                    Timestamp parsedDate = dateParser(value, key);
+                    trendingVideo.put(key, parsedDate);
+                }
+                default -> trendingVideo.put(key, value);
             }
         }
 
@@ -117,5 +123,20 @@ public class YouTubeTrendingApplication {
     //make an array of tags
     public static String[] parseTags(String value){
         return value.split("\\|");
+    }
+
+    public static Timestamp dateParser(String dateString, String key) throws ParseException {
+        SimpleDateFormat dateFormat;
+        if(key.equals("trending_date")){
+            dateFormat = new SimpleDateFormat("yy.dd.mm");
+            Date parsedDate = dateFormat.parse(dateString);
+            return new Timestamp(parsedDate.getTime());
+        }
+        else {
+            DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+            ZonedDateTime result = ZonedDateTime.parse(dateString, formatter);
+            return Timestamp.from(result.toInstant());
+        }
+
     }
 }

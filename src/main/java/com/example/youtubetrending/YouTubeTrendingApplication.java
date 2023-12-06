@@ -2,20 +2,16 @@ package com.example.youtubetrending;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvException;
-import netscape.javascript.JSObject;
 import org.json.JSONObject;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -88,5 +84,10 @@ public class YouTubeTrendingApplication {
             }
         }
         return categoryWithId;
+    }
+
+    //make an array of tags
+    public String[] parseTags(String line){
+        return line.split("|");
     }
 }

@@ -5,9 +5,11 @@ import com.google.gson.reflect.TypeToken;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvException;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
@@ -37,25 +39,46 @@ public class YouTubeTrendingApplication {
         String[] header = lines.get(0);
         lines.remove(0);
 
+        JSONArray videos = new JSONArray();
 
+        for(String[] line : lines){
+            JSONObject jsonObject = lineToObject(line, header, categoryJsonPath);
+            videos.put(jsonObject);
+        }
+
+        FileWriter writer = new FileWriter(jsonPath);
+        videos.write(writer);
+        writer.flush();
+        writer.close();
 
     }
 
     //video_id,trending_date,title,channel_title,category_id,publish_time,tags,views,likes,dislikes,comment_count,thumbnail_link,comments_disabled,ratings_disabled,video_error_or_removed,description
 
     //convert one line in one JSON object
-    public JSONObject lineToObject(String[] line, String[] header){
+    public static JSONObject lineToObject(String[] line, String[] header, String categoryJsonPath) throws IOException {
         JSONObject trendingVideo = new JSONObject();
 
         for(int i = 0; i < line.length; i++){
+            String key = header[i];
+            String value = line[i];
 
+            if(key.equals("category_id")){
+                trendingVideo.put("category",categoryIdToObject(Integer.parseInt(value), categoryJsonPath));
+            }else if(key.equals("tags")){
+                JSONArray tags = new JSONArray(parseTags(value));
+                trendingVideo.put(key, tags);
+            }
+            else{
+                trendingVideo.put(key, value);
+            }
         }
 
         return trendingVideo;
     }
 
     //get category JSON from categoryID
-    public JSONObject categoryIdToObject(int categoryId, String categoryJsonPath) throws IOException {
+    public static JSONObject categoryIdToObject(int categoryId, String categoryJsonPath) throws IOException {
         String json = new String(Files.readAllBytes(Paths.get(categoryJsonPath)));
 
         JSONObject categoryWithId = new JSONObject();
@@ -71,7 +94,7 @@ public class YouTubeTrendingApplication {
         //take only the list of items
         List<?> list = (List<?>) map.get("items");
 
-        //iterate trough all items
+        //iterate through all items
         for(Object obj : list){
 
             //create map for each object
@@ -87,7 +110,7 @@ public class YouTubeTrendingApplication {
     }
 
     //make an array of tags
-    public String[] parseTags(String line){
-        return line.split("|");
+    public static String[] parseTags(String value){
+        return value.split("|");
     }
 }

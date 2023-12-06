@@ -111,6 +111,6 @@ public class YouTubeTrendingApplication {
 
     //make an array of tags
     public static String[] parseTags(String value){
-        return value.split("|");
+        return value.split("\\|");
     }
 }

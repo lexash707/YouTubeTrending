@@ -68,8 +68,13 @@ public class YouTubeTrendingApplication {
             }else if(key.equals("tags")){
                 JSONArray tags = new JSONArray(parseTags(value));
                 trendingVideo.put(key, tags);
-            }
-            else{
+            } else if (key.equals("views")
+                    || key.equals("likes")
+                    || key.equals("dislikes")
+                    || key.equals("comment_count")) {
+
+                trendingVideo.put(key, Integer.parseInt(value));
+            } else{
                 trendingVideo.put(key, value);
             }
         }

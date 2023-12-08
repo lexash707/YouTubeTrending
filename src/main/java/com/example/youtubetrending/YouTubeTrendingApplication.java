@@ -42,6 +42,7 @@ public class YouTubeTrendingApplication {
         CSVReader reader = new CSVReaderBuilder(new FileReader(csvPath)).build();
         List<String[]> lines = reader.readAll();
 
+        //save the header and remove it from the list
         String[] header = lines.get(0);
         lines.remove(0);
 
